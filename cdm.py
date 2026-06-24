@@ -7,7 +7,7 @@ st.set_page_config(page_title="Dashboard Pronos", layout="wide")
 st.title("🏆 Évolution du Tournoi de Pronostics")
 
 # 2. Ton lien Google Sheets publié en CSV
-URL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhdbxmiZ9Esab5asDuEfBZJY_SFVX50H3G7Z-W_9EhR_w4hyY_WcbOrMos6PIcncd9MNbFVmY-Pwz_/pub?gid=123456789&single=true&output=csv"
+URL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZTYmWFgWslN3Co8nlcUxCYJWMML6D28tGcEBDJTZHTSfIHOwOdagpX_W8ekhtyqV4I4Qn24VQtBD/pub?gid=868769003&single=true&output=csv"
 
 # 3. Fonction pour charger les données (avec un cache pour la rapidité)
 @st.cache_data(ttl=300) # Le dashboard gardera les données en mémoire 5 minutes avant de revérifier le Sheet
