@@ -29,6 +29,9 @@ def aller_a_equipe():
 def aller_a_stats():
     st.session_state.page = "stats"
 
+def aller_a_gazettes():
+    st.session_state.page = "gazettes"
+
 def retour_accueil():
     st.session_state.page = "accueil"
 
@@ -41,13 +44,18 @@ try:
         st.title("🏆 Tournoi de Pronostics")
         st.write("Bienvenue ! Choisissez la section que vous souhaitez consulter :")
         
-        col1, col2, col3 = st.columns(3)
+        # Grille 2x2 pour les boutons d'accueil
+        col1, col2 = st.columns(2)
         with col1:
             st.button("👤 Classement Individuel", use_container_width=True, on_click=aller_a_indiv)
         with col2:
             st.button("👥 Classement par Équipe", use_container_width=True, on_click=aller_a_equipe)
+            
+        col3, col4 = st.columns(2)
         with col3:
             st.button("📊 Statistiques (Jours en tête)", use_container_width=True, on_click=aller_a_stats)
+        with col4:
+            st.button("📰 Pronos Hebdo (Gazettes)", use_container_width=True, on_click=aller_a_gazettes)
 
     # PAGE INDIVIDUELLE (Colonnes A à AH)
     elif st.session_state.page == "indiv":
@@ -88,19 +96,14 @@ try:
         st.title("📊 Statistiques : Jours en tête")
         st.write("Découvrez qui a dominé le classement le plus longtemps au cours du tournoi.")
         
-        # --- Calcul des jours en tête (Individuel) ---
-        # On enlève la colonne Date pour faire des calculs mathématiques
         df_indiv_calcul = df.iloc[:, 1:34].apply(pd.to_numeric, errors='coerce')
-        # On compare chaque cellule au max de sa ligne, puis on compte combien de fois c'est Vrai
         jours_tete_indiv = df_indiv_calcul.eq(df_indiv_calcul.max(axis=1), axis=0).sum()
         top3_indiv = jours_tete_indiv.sort_values(ascending=False).head(3)
 
-        # --- Calcul des jours en tête (Équipe) ---
         df_equipe_calcul = df.iloc[:, 34:39].apply(pd.to_numeric, errors='coerce')
         jours_tete_equipe = df_equipe_calcul.eq(df_equipe_calcul.max(axis=1), axis=0).sum()
         top3_equipe = jours_tete_equipe.sort_values(ascending=False).head(3)
 
-        # --- Affichage des résultats en deux colonnes ---
         col_stat1, col_stat2 = st.columns(2)
         
         with col_stat1:
@@ -114,6 +117,26 @@ try:
             for idx, (equipe, jours) in enumerate(top3_equipe.items(), start=1):
                 if jours > 0:
                     st.metric(label=f"N°{idx} - {equipe}", value=f"{jours} jour(s)")
+
+    # PAGE GAZETTES (Pronos Hebdo)
+    elif st.session_state.page == "gazettes":
+        if st.button("⬅️ Retour au menu"):
+            retour_accueil()
+            st.rerun()
+
+        st.title("📰 Les Gazettes Pronos Hebdo")
+        st.write("Retrouvez ici toutes les éditions de la gazette pour suivre l'actualité du tournoi !")
+
+        # --- Remplace les liens ci-dessous par tes vrais liens ---
+        liste_gazettes = {
+            "Semaine 1 : Le début des hostilités": "https://www.google.com",
+            "Semaine 2 : Les premières surprises": "https://www.google.com",
+            "Semaine 3 : La remontada !": "https://www.google.com",
+        }
+
+        # Affichage des boutons pour chaque gazette
+        for titre, lien in liste_gazettes.items():
+            st.link_button(f"📖 Lire la Gazette : {titre}", lien, use_container_width=True)
 
 except Exception as e:
     st.error(f"Erreur lors du chargement : {e}")
