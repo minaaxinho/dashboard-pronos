@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit.components.v1 as components
+import base64
 import os
 
 # 1. Configuration de la page
@@ -126,12 +126,12 @@ try:
         st.title("📰 Les Gazettes Pronos Hebdo")
         st.write("Sélectionnez une édition pour la lire directement ici !")
 
-        # Dictionnaire liant le titre affiché au vrai nom du fichier sur ton PC
+        # Dictionnaire liant le titre affiché au vrai nom du fichier PDF sur ton PC
         liste_gazettes = {
-            "Pronos Hebdo 1 - Elle revient": "Pronos Hebdo 1 - Elle revient.html",
-            "Pronos Hebdo 2 - Le Mondial est lancé !": "Pronos Hebdo 2 - Le Mondial est lancé !.html",
-            "Pronos Hebdo 3 - On atteint des sommets": "Pronos Hebdo 3 - On atteint des sommets.html",
-            "Pronos Hebdo 4 - La guerre du milieu": "Pronos Hebdo 4 - La guerre du milieu.html",
+            "Pronos Hebdo 1 - Elle revient": "Pronos Hebdo 1 - Elle revient.pdf",
+            "Pronos Hebdo 2 - Le Mondial est lancé !": "Pronos Hebdo 2 - Le Mondial est lancé !.pdf",
+            "Pronos Hebdo 3 - On atteint des sommets": "Pronos Hebdo 3 - On atteint des sommets.pdf",
+            "Pronos Hebdo 4 - La guerre du milieu": "Pronos Hebdo 4 - La guerre du milieu.pdf",
         }
 
         # Menu déroulant pour choisir la gazette
@@ -142,12 +142,24 @@ try:
 
         # Vérifie si le fichier existe bien dans le dossier
         if os.path.exists(nom_fichier):
-            # Ouvre et lit le fichier HTML
-            with open(nom_fichier, 'r', encoding='utf-8') as f:
-                html_content = f.read()
+            # Ouvre et lit le fichier PDF en mode binaire ("rb")
+            with open(nom_fichier, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
             
-            # Affiche le HTML dans le dashboard avec une hauteur de 800px et une barre de défilement
-            components.html(html_content, height=800, scrolling=True)
+            # Création de l'iframe HTML pour intégrer le PDF
+            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
+            
+            # Affichage dans Streamlit
+            st.markdown(pdf_display, unsafe_allow_html=True)
+            
+            # Ajout d'un bouton de téléchargement au cas où l'affichage ne fonctionne pas sur certains navigateurs
+            with open(nom_fichier, "rb") as f:
+                st.download_button(
+                    label="📥 Télécharger la gazette au format PDF",
+                    data=f,
+                    file_name=nom_fichier,
+                    mime="application/pdf"
+                )
         else:
             st.warning(f"⚠️ Le fichier '{nom_fichier}' est introuvable. Assure-toi de l'avoir copié dans le même dossier que ce script Python.")
 
