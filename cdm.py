@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import streamlit.components.v1 as components
+import os
 
 # 1. Configuration de la page
 st.set_page_config(page_title="Dashboard Pronos", layout="wide")
@@ -44,7 +46,6 @@ try:
         st.title("🏆 Tournoi de Pronostics")
         st.write("Bienvenue ! Choisissez la section que vous souhaitez consulter :")
         
-        # Grille 2x2 pour les boutons d'accueil
         col1, col2 = st.columns(2)
         with col1:
             st.button("👤 Classement Individuel", use_container_width=True, on_click=aller_a_indiv)
@@ -57,14 +58,13 @@ try:
         with col4:
             st.button("📰 Pronos Hebdo (Gazettes)", use_container_width=True, on_click=aller_a_gazettes)
 
-    # PAGE INDIVIDUELLE (Colonnes A à AH)
+    # PAGE INDIVIDUELLE
     elif st.session_state.page == "indiv":
         if st.button("⬅️ Retour au menu"):
             retour_accueil()
             st.rerun()
 
         st.title("👤 Classement Individuel")
-        
         df_indiv = df.iloc[:, 0:34]
         df_long = df_indiv.melt(id_vars='Date', var_name='Participant', value_name='Points')
         
@@ -72,14 +72,13 @@ try:
         fig.update_layout(hovermode="x unified", xaxis_title="")
         st.plotly_chart(fig, use_container_width=True)
 
-    # PAGE ÉQUIPE (Colonnes AI à AM)
+    # PAGE ÉQUIPE
     elif st.session_state.page == "equipe":
         if st.button("⬅️ Retour au menu"):
             retour_accueil()
             st.rerun()
 
         st.title("👥 Classement par Équipe")
-        
         df_equipe = pd.concat([df.iloc[:, [0]], df.iloc[:, 34:39]], axis=1)
         df_long = df_equipe.melt(id_vars='Date', var_name='Équipe', value_name='Points')
         
@@ -87,7 +86,7 @@ try:
         fig.update_layout(hovermode="x unified", xaxis_title="")
         st.plotly_chart(fig, use_container_width=True)
 
-    # PAGE STATISTIQUES (Jours en tête)
+    # PAGE STATISTIQUES
     elif st.session_state.page == "stats":
         if st.button("⬅️ Retour au menu"):
             retour_accueil()
@@ -125,18 +124,32 @@ try:
             st.rerun()
 
         st.title("📰 Les Gazettes Pronos Hebdo")
-        st.write("Retrouvez ici toutes les éditions de la gazette pour suivre l'actualité du tournoi !")
+        st.write("Sélectionnez une édition pour la lire directement ici !")
 
-        # --- Remplace les liens ci-dessous par tes vrais liens ---
+        # Dictionnaire liant le titre affiché au vrai nom du fichier sur ton PC
         liste_gazettes = {
-            "Semaine 1 : Le début des hostilités": "https://www.google.com",
-            "Semaine 2 : Les premières surprises": "https://www.google.com",
-            "Semaine 3 : La remontada !": "https://www.google.com",
+            "Pronos Hebdo 1 - Elle revient": "Pronos Hebdo 1 - Elle revient.html",
+            "Pronos Hebdo 2 - Le Mondial est lancé !": "Pronos Hebdo 2 - Le Mondial est lancé !.html",
+            "Pronos Hebdo 3 - On atteint des sommets": "Pronos Hebdo 3 - On atteint des sommets.html",
+            "Pronos Hebdo 4 - La guerre du milieu": "Pronos Hebdo 4 - La guerre du milieu.html",
         }
 
-        # Affichage des boutons pour chaque gazette
-        for titre, lien in liste_gazettes.items():
-            st.link_button(f"📖 Lire la Gazette : {titre}", lien, use_container_width=True)
+        # Menu déroulant pour choisir la gazette
+        gazette_choisie = st.selectbox("Choisissez l'édition à lire :", list(liste_gazettes.keys()))
+        nom_fichier = liste_gazettes[gazette_choisie]
+
+        st.divider() # Ligne de séparation
+
+        # Vérifie si le fichier existe bien dans le dossier
+        if os.path.exists(nom_fichier):
+            # Ouvre et lit le fichier HTML
+            with open(nom_fichier, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Affiche le HTML dans le dashboard avec une hauteur de 800px et une barre de défilement
+            components.html(html_content, height=800, scrolling=True)
+        else:
+            st.warning(f"⚠️ Le fichier '{nom_fichier}' est introuvable. Assure-toi de l'avoir copié dans le même dossier que ce script Python.")
 
 except Exception as e:
     st.error(f"Erreur lors du chargement : {e}")
