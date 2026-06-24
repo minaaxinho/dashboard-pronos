@@ -147,8 +147,7 @@ try:
                 base64_pdf = base64.b64encode(f.read()).decode('utf-8')
             
             # Création de l'iframe HTML pour intégrer le PDF
-            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-            
+            pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf">'            
             # Affichage dans Streamlit
             st.markdown(pdf_display, unsafe_allow_html=True)
             
