@@ -4,67 +4,78 @@ import plotly.express as px
 
 # 1. Configuration de la page
 st.set_page_config(page_title="Dashboard Pronos", layout="wide")
-st.title("🏆 Évolution du Tournoi de Pronostics")
+
+# Initialisation du menu dans l'état de la session (session_state)
+if 'page' not in st.session_state:
+    st.session_state.page = "accueil"
 
 # 2. Ton lien Google Sheets publié en CSV
 URL_SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZTYmWFgWslN3Co8nlcUxCYJWMML6D28tGcEBDJTZHTSfIHOwOdagpX_W8ekhtyqV4I4Qn24VQtBD/pub?gid=868769003&single=true&output=csv"
 
-# 3. Fonction pour charger les données
+# 3. Fonction pour charger les données (avec correction des virgules)
 @st.cache_data(ttl=300)
 def charger_donnees(url):
-    df = pd.read_csv(url)
+    # decimal=',' permet de transformer "7,14" en 7.14 pour que Python comprenne les chiffres
+    df = pd.read_csv(url, decimal=',')
     df.rename(columns={df.columns[0]: 'Date'}, inplace=True)
     return df
 
+# --- FONCTIONS DE NAVIGATION ---
+def aller_a_indiv():
+    st.session_state.page = "indiv"
+
+def aller_a_equipe():
+    st.session_state.page = "equipe"
+
+def retour_accueil():
+    st.session_state.page = "accueil"
+
+# --- LOGIQUE D'AFFICHAGE ---
 try:
-    # 4. Récupération des données
     df = charger_donnees(URL_SHEET_CSV)
 
-    # 5. Séparation des données en deux DataFrames
-    # A à AH : Index 0 à 33 inclus (donc tranche 0:34)
-    df_groupe1 = df.iloc[:, 0:34]
-    
-    # AI à AM : Index 34 à 38 inclus (donc tranche 34:39)
-    # On ajoute la colonne Date (index 0) avec pd.concat
-    df_groupe2 = pd.concat([df.iloc[:, [0]], df.iloc[:, 34:39]], axis=1)
+    # ÉCRAN D'ACCUEIL
+    if st.session_state.page == "accueil":
+        st.title("🏆 Tournoi de Pronostics")
+        st.write("Bienvenue ! Choisissez le classement que vous souhaitez consulter :")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("👤 Classement Individuel", use_container_width=True, on_click=aller_a_indiv)
+        with col2:
+            st.button("👥 Classement par Équipe", use_container_width=True, on_click=aller_a_equipe)
 
-    # Passage au format "long" pour que Plotly puisse tracer les courbes
-    df_long_1 = df_groupe1.melt(id_vars='Date', var_name='Participant', value_name='Points Cumulés')
-    df_long_2 = df_groupe2.melt(id_vars='Date', var_name='Participant', value_name='Points Cumulés')
+    # PAGE INDIVIDUELLE (Colonnes A à AH)
+    elif st.session_state.page == "indiv":
+        if st.button("⬅️ Retour au menu"):
+            retour_accueil()
+            st.rerun()
 
-    # 6. Création et affichage du premier graphique (A à AH)
-    st.subheader("Classement Principal (A à AH)")
-    fig1 = px.line(
-        df_long_1, 
-        x='Date', 
-        y='Points Cumulés', 
-        color='Participant',
-        markers=True
-    )
-    fig1.update_layout(
-        xaxis_title="",
-        yaxis_title="Points",
-        legend_title="Participants",
-        hovermode="x unified"
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+        st.title("👤 Classement Individuel")
+        
+        # Sélection des colonnes A à AH (Index 0 à 34 exclu)
+        df_indiv = df.iloc[:, 0:34]
+        df_long = df_indiv.melt(id_vars='Date', var_name='Participant', value_name='Points')
+        
+        fig = px.line(df_long, x='Date', y='Points', color='Participant', markers=True)
+        fig.update_layout(hovermode="x unified", xaxis_title="")
+        st.plotly_chart(fig, use_container_width=True)
 
-    # 7. Création et affichage du second graphique (AI à AM)
-    st.subheader("Classement Secondaire (AI à AM)")
-    fig2 = px.line(
-        df_long_2, 
-        x='Date', 
-        y='Points Cumulés', 
-        color='Participant',
-        markers=True
-    )
-    fig2.update_layout(
-        xaxis_title="",
-        yaxis_title="Points",
-        legend_title="Participants",
-        hovermode="x unified"
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+    # PAGE ÉQUIPE (Colonnes AI à AM)
+    elif st.session_state.page == "equipe":
+        if st.button("⬅️ Retour au menu"):
+            retour_accueil()
+            st.rerun()
+
+        st.title("👥 Classement par Équipe")
+        
+        # Sélection de la colonne Date + colonnes AI à AM (index 34 à 39 exclu)
+        df_equipe = pd.concat([df.iloc[:, [0]], df.iloc[:, 34:39]], axis=1)
+        df_long = df_equipe.melt(id_vars='Date', var_name='Équipe', value_name='Points')
+        
+        fig = px.line(df_long, x='Date', y='Points', color='Équipe', markers=True)
+        fig.update_layout(hovermode="x unified", xaxis_title="")
+        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
-    st.error(f"Impossible de charger les données. Vérifie que le lien Google Sheets est correct et contient toutes les colonnes ciblées. Erreur: {e}")
+    st.error(f"Erreur lors du chargement : {e}")
