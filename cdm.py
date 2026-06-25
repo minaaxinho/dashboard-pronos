@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import base64
 import os
+from streamlit_pdf_viewer import pdf_viewer
 
 # 1. Configuration de la page
 st.set_page_config(page_title="Dashboard Pronos", layout="wide")
@@ -142,16 +142,12 @@ try:
 
         # Vérifie si le fichier existe bien dans le dossier
         if os.path.exists(nom_fichier):
-            # Ouvre et lit le fichier PDF en mode binaire ("rb")
-            with open(nom_fichier, "rb") as f:
-                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
             
-            # Création de l'iframe HTML pour intégrer le PDF
-            pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf">'            
-            # Affichage dans Streamlit
-            st.markdown(pdf_display, unsafe_allow_html=True)
+            # Affichage robuste du PDF avec la bibliothèque dédiée
+            pdf_viewer(nom_fichier, width=800, height=800)
             
-            # Ajout d'un bouton de téléchargement au cas où l'affichage ne fonctionne pas sur certains navigateurs
+            st.write("---")
+            # Bouton de téléchargement
             with open(nom_fichier, "rb") as f:
                 st.download_button(
                     label="📥 Télécharger la gazette au format PDF",
